@@ -4,7 +4,7 @@
 
 #define SYS_SW_MAIN_VERSION					0X02 //软件版本
 #define SYS_SW_SUB_VERSION					0X02
-#define SYS_SW_MODIFY_VERSION				(uint16_t)0X0001	
+#define SYS_SW_MODIFY_VERSION				(uint16_t)0X0002	
 
 #define SYS_HW_MAIN_VERSION					0X01 //硬件版本
 #define SYS_HW_SUB_VERSION					0X01

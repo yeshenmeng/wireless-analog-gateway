@@ -26,6 +26,7 @@ typedef struct{
 
 void Calendar_TimeStampToDate(time_t time, Date_t* date);
 time_t Calendar_DateToTimeStamp(Date_t* date);
+char* calendar_ctime(const unsigned int *timep);
 
 void Calendar_Init(void);
 Calendar_t* Calendar_GetHandle(void);

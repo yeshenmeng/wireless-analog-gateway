@@ -9,6 +9,7 @@
 #include "string.h"
 #include "host_net_swap.h"
 #include "sx1262.h"
+#include "calendar.h"
 
 
 #define UART_TX_BUF_SIZE 256       //串口发送缓存大小（字节数）
@@ -139,8 +140,8 @@ void iot_conn_process(void)
 	if(ctrl_class.print_ctrl & 0X02)
 	{
 		extern sx1262_drive_t* lora_obj_get(void);
-		char div_1 = ':';
-		printf("无线信号强度%c%d",div_1,lora_obj_get()->radio_state.rssi);
+		char div_2 = ' ';
+		printf("上行信号强度%c%d",div_2,lora_obj_get()->radio_state.rssi);
 		printf("\n");
 	}
 		
@@ -184,6 +185,8 @@ uint8_t long_addr_match(uint8_t* param, uint8_t* value, uint8_t len)
 uint8_t device_long_addr[8];
 void iot_data_push_process(void)
 {
+	signed char downlink_rssi = -127;
+	
 	if(ctrl_class.print_ctrl & 0X02)
 	{
 		char div_1 = ':';
@@ -191,67 +194,88 @@ void iot_data_push_process(void)
 		char div_3 = ' ';
 		float value = 0;
 		uint8_t index = 0;
-		if(LoraRxBuf[4] == 40)
-		{
-			index += 3;
-		}
 	
 		extern lora_reply_data_t lora_reply_data;
 		printf("测点发送数据%c",div_1);
 		
+		index += 5; //跳过头与数据长度
 		
 		char str[17];
-		bytes_to_hex_string(&LoraRxBuf[5], str, 8, 0);
+		bytes_to_hex_string(&LoraRxBuf[index], str, 8, 0);
+		index += 8;
 		printf("长地址%c%s%c",div_2,str,div_3);
 		
-		printf("电量%c%d%c",div_2,LoraRxBuf[19+index],div_3);
+		uint8_t attr_nums = LoraRxBuf[index]; //属性个数
+		index += (attr_nums+1); //跳过属性个数
 		
-		swap_reverse(&LoraRxBuf[20+index], 4);
-		memcpy(&value, &LoraRxBuf[20+index], 4);
+		swap_reverse(&LoraRxBuf[index], 4);
+		printf("时间戳%c%d%c",div_2,*(uint32_t*)&LoraRxBuf[index],div_3);
+		char* timep_str = calendar_ctime((uint32_t *)&LoraRxBuf[index]);
+		printf("(%s)%c",timep_str, div_3);
+		index += 4;
+		
+		printf("电量%c%d%%%c",div_2,LoraRxBuf[index],div_3);
+		index += 1;
+		
+		swap_reverse(&LoraRxBuf[index], 4);
+		memcpy(&value, &LoraRxBuf[index], 4);
+		index += 4;
 		printf("温度%c%.1f%c",div_2,value,div_3);
+		
+		downlink_rssi = (int8_t)LoraRxBuf[index];
+		index += 1;
 
 		uint8_t long_addr[8];
 		memcpy(long_addr, &LoraRxBuf[5], 8);
 		if(long_addr[0] == 0XC8)
 		{
-			swap_reverse(&LoraRxBuf[24+index], 4);
-			memcpy(&value, &LoraRxBuf[24+index], 4);
+			swap_reverse(&LoraRxBuf[index], 4);
+			memcpy(&value, &LoraRxBuf[index], 4);
+			index += 4;
 			printf("X轴角度%c%.3f%c",div_2,value,div_3);
 			
-			swap_reverse(&LoraRxBuf[28+index], 4);
-			memcpy(&value, &LoraRxBuf[28+index], 4);
+			swap_reverse(&LoraRxBuf[index], 4);
+			memcpy(&value, &LoraRxBuf[index], 4);
+			index += 4;
 			printf("Y轴角度%c%.3f%c",div_2,value,div_3);
 			
-			swap_reverse(&LoraRxBuf[32+index], 4);
-			memcpy(&value, &LoraRxBuf[32+index], 4);
+			swap_reverse(&LoraRxBuf[index], 4);
+			memcpy(&value, &LoraRxBuf[index], 4);
+			index += 4;
 			printf("Z轴角度%c%.3f%c",div_2,value,div_3);
 		}
 		else if(long_addr[0] == 0XC9)
 		{
-			swap_reverse(&LoraRxBuf[24+index], 4);
-			memcpy(&value, &LoraRxBuf[24+index], 4);
+			swap_reverse(&LoraRxBuf[index], 4);
+			memcpy(&value, &LoraRxBuf[index], 4);
+			index += 4;
 			printf("X轴加速度%c%.3f%c",div_2,value,div_3);
 			
-			swap_reverse(&LoraRxBuf[28+index], 4);
-			memcpy(&value, &LoraRxBuf[28+index], 4);
+			swap_reverse(&LoraRxBuf[index], 4);
+			memcpy(&value, &LoraRxBuf[index], 4);
+			index += 4;
 			printf("Y轴加速度%c%.3f%c",div_2,value,div_3);
 			
-			swap_reverse(&LoraRxBuf[32+index], 4);
-			memcpy(&value, &LoraRxBuf[32+index], 4);
+			swap_reverse(&LoraRxBuf[index], 4);
+			memcpy(&value, &LoraRxBuf[index], 4);
+			index += 4;
 			printf("Z轴加速度%c%.3f%c",div_2,value,div_3);
 			
-			if(LoraRxBuf[4] == 46)
+			if(LoraRxBuf[4] == 53)
 			{
-				swap_reverse(&LoraRxBuf[36+index], 4);
-				memcpy(&value, &LoraRxBuf[36+index], 4);
+				swap_reverse(&LoraRxBuf[index], 4);
+				memcpy(&value, &LoraRxBuf[index], 4);
+				index += 4;
 				printf("X轴角度%c%.3f%c",div_2,value,div_3);
 				
-				swap_reverse(&LoraRxBuf[40+index], 4);
-				memcpy(&value, &LoraRxBuf[40+index], 4);
+				swap_reverse(&LoraRxBuf[index], 4);
+				memcpy(&value, &LoraRxBuf[index], 4);
+				index += 4;
 				printf("Y轴角度%c%.3f%c",div_2,value,div_3);
 				
-				swap_reverse(&LoraRxBuf[44+index], 4);
-				memcpy(&value, &LoraRxBuf[44+index], 4);
+				swap_reverse(&LoraRxBuf[index], 4);
+				memcpy(&value, &LoraRxBuf[index], 4);
+				index += 4;
 				printf("Z轴角度%c%.3f%c",div_2,value,div_3);
 			}
 		}
@@ -261,7 +285,12 @@ void iot_data_push_process(void)
 	{
 		extern sx1262_drive_t* lora_obj_get(void);
 		char div_1 = ':';
-		printf("无线信号强度%c%d",div_1,lora_obj_get()->radio_state.rssi);
+		char div_2 = ' ';
+		char div_3 = ' ';
+		printf("上行信号强度%c%d%c",div_2,lora_obj_get()->radio_state.rssi, div_3);
+		
+		printf("下行信号强度%c%d%c",div_2,downlink_rssi,div_3);
+		
 		printf("\n");
 	}
 	
@@ -322,9 +351,10 @@ void iot_data_lost_rate_process(void)
 		payload_length = LoraRxBuf[13];
 		
 		char div_1 = ':';
+		char div_2 = ' ';
 		printf("LORA丢包率测试%c",div_1);
 		extern sx1262_drive_t* lora_obj_get(void);
-		printf("无线信号强度%c%d",div_1,lora_obj_get()->radio_state.rssi);
+		printf("上行信号强度%c%d",div_2,lora_obj_get()->radio_state.rssi);
 		printf("\n");
 	}
 	
@@ -398,7 +428,7 @@ void uart_test(void)
 		{
 			extern sx1262_drive_t* lora_obj_get(void);
 			char div_1 = ':';
-			printf("无线信号强度%c%d",div_1,lora_obj_get()->radio_state.rssi);
+			printf("上行信号强度%c%d",div_1,lora_obj_get()->radio_state.rssi);
 			printf("\n");
 			printf("\n");
 		}
@@ -415,8 +445,10 @@ void uart_run(void)
 //串口配置
 void uart_init(void)
 {
-	uint32_t err_code;
+	uint32_t err_code = 0;
 
+	uart_timer_init();
+	
 	//定义串口通讯参数配置结构体并初始化
 	const app_uart_comm_params_t comm_params =
 	{
@@ -439,7 +471,7 @@ void uart_init(void)
 					 err_code);
 
 	APP_ERROR_CHECK(err_code);
-	uart_timer_init();
+	
 }
 
 #if 0

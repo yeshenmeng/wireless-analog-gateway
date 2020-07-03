@@ -187,6 +187,7 @@ int main(void)
 {
 	/**********************************硬件设备初始化**********************************/
 	NRF_POWER->DCDCEN = 1; //打开DCDC
+//	NRF_CLOCK->EVENTS_HFCLKSTARTED = 0;
 //	NRF_CLOCK->TASKS_HFCLKSTART = 1; //启动外部时钟源
 //	while(!NRF_CLOCK->EVENTS_HFCLKSTARTED); //等待外部时钟源启动完成
 	LFCLK_Config(); //RTC时钟源设置

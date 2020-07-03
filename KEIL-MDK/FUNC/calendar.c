@@ -201,6 +201,40 @@ static void Calendar_SetTimeStamp(time_t TimeStamp)
 }
 #endif
 
+char* calendar_ctime(const unsigned int *timep)
+{
+	Date_t date;
+	
+	Calendar_TimeStampToDate(*timep, &date);
+	
+	static char buf[25];
+	uint8_t i = 0;
+    sprintf(&buf[i], "%0*d", 4, date.Year); //用变量控制数据的宽度
+	i += 4;
+	buf[i] = '-';
+	i += 1;
+	sprintf(&buf[i], "%0*d", 2, date.Month);
+	i += 2;
+	buf[i] = '-';
+	i += 1;
+	sprintf(&buf[i], "%0*d", 2, date.Day);
+	i += 2;
+	buf[i] = ' ';
+	i += 1;
+	sprintf(&buf[i], "%0*d", 2, date.Hour);
+	i += 2;
+	buf[i] = ':';
+	i += 1;
+	sprintf(&buf[i], "%0*d", 2, date.Minute);
+	i += 2;
+	buf[i] = ':';
+	i += 1;
+	sprintf(&buf[i], "%0*d", 2, date.Second);
+	i += 2;
+	buf[i] = '\0';
+	return buf;
+}
+
 /** @brief Function initialization and configuration of RTC driver instance.
  */
 static void Calendar_RTC2Config(void)

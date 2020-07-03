@@ -43,10 +43,11 @@ void Sys_ParamInit(void)
 	
 	uint8_t data[8] = SYS_PARAM_DEV_GATEWAY_ADDR;
 	memcpy(sys_param.dev_gateway_addr, data,8);
-	sys_param.lora_freq = 433;
+	sys_param.lora_freq = 470;
 	sys_param.lora_power = 17;
 	sys_param.lora_bw = 7;
 	sys_param.lora_sf = 11;
+	
 	sys_param.update_flag = 0;
 	sys_param.saveParamToFlash = Sys_SaveParamToFlash;
 }

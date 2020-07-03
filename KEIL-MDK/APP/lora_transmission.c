@@ -374,11 +374,14 @@ lora_reply_data_t lora_reply_init_data = {
 //8->200HZ
 //崩塌测点连接时回复的默认参数
 lora_reply_data_t lora_c_reply_init_data = {
-	.status = PERIOD | INTERVAL | SENSOR_FREQ | TIME_OFFSET,
-	.period = 20,
-	.interval = 1,
+	.status = MODE | PERIOD | INTERVAL | TIME_STAMP | SENSOR_FREQ | TIME_OFFSET | DATA_POINTS | ACCEL_SLOPE,
+	.period = 3600 * 12,
+	.interval = 5,
 	.sensor_freq = 3,
 	.time_offset = 0,
+	.data_points = 2,
+	.accel_slope = 100,
+	.mode = 1,
 };
 
 void Lora_ConnReply(void)
@@ -839,6 +842,7 @@ void Lora_C_DataReply(void)
 	/* CRC16 */
 	wireless_comm_services_t* wirelessCommSvc = Wireless_CommSvcGetHandle();
 	uint16_t crc16 = wirelessCommSvc->modbusRtuCRC(LoraReplyBuf, LoraReplySize);
+//	crc16 = 0X4565;
 	memcpy(&LoraReplyBuf[LoraReplySize], (uint8_t*)&crc16, sizeof(crc16));
 	LoraReplySize += sizeof(crc16);
 	
